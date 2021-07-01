@@ -1,0 +1,123 @@
+package yanwang.yanwang.yanwang;
+
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scoreboard.*;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.OptionalDouble;
+
+public final class YanWang extends JavaPlugin {
+
+    @Override
+    public void onEnable() {
+        // Plugin startup logic
+
+        getConfig().options().copyDefaults();
+        saveDefaultConfig();
+
+        System.out.println("插件已启动");
+        //getServer().getPluginManager().registerEvents(new newPlayer(),this);
+
+        new BukkitRunnable() {
+
+            @Override
+            public void run() {
+                Plugin config = YanWang.getPlugin(YanWang.class);
+                Bukkit.getOnlinePlayers().forEach(p ->{
+
+                    Scoreboard scoreboard = p.getScoreboard();
+                    String playerName = p.getName();
+                    int playerping = p.getPing();
+
+                    double[] servertps = Bukkit.getServer().getTPS();
+                    String tps = String.valueOf(Arrays.stream(servertps).findFirst()).replace("OptionalDouble","").replace("[","").replace("]","").substring(0,5);
+
+                    String serverip = getServer().getIp();
+
+
+                    //Bukkit.getServer().broadcastMessage(tps);
+                    //scoreboard = getServer().getScoreboardManager().getNewScoreboard();
+                    if (scoreboard == null || scoreboard.equals(getServer().getScoreboardManager().getMainScoreboard())) {
+                        scoreboard = getServer().getScoreboardManager().getNewScoreboard();
+                    }
+
+                    List<String> moneyName = config.getConfig().getStringList("money-Name");
+                    List<String> moneyMoney = config.getConfig().getStringList("money-Money");
+
+
+                    if (moneyName.contains(playerName)){
+                        //Bukkit.getServer().broadcastMessage("true");
+                    }else{
+
+                        moneyName.add(playerName);
+                        moneyMoney.add(String.valueOf(0));
+                        config.getConfig().set("money-Name",moneyName);
+                        config.getConfig().set("money-Money",moneyMoney);
+                        //Bukkit.getServer().broadcastMessage("false");
+                        config.saveConfig();
+                        config.reloadConfig();
+                    }
+
+
+
+                    Objective objective =scoreboard.getObjective("个人信息");
+                    if (objective == null) objective = scoreboard.registerNewObjective("个人信息","dummy");
+                    Score huanying = objective.getScore("欢迎 " + playerName + " 来游玩");
+                    huanying.setScore(0);
+
+
+                    /*
+                    Score score_playerping = objective.getScore(String.valueOf(playerping));
+                    score_playerping.setScore(-5);
+                    Score score_servertps = objective.getScore(String.valueOf(servertps));
+                    score_servertps.setScore(-6);
+
+
+                     */
+
+
+                    for (int i = -5;i>-7;i--){
+                        Team team = scoreboard.registerNewTeam(Integer.toString(i));
+                        if (team == null ) team = scoreboard.registerNewTeam(Integer.toString(i));
+                        Score s = objective.getScore(ChatColor.translateAlternateColorCodes('&', "&" + Math.abs(i)));
+                        s.setScore(i);
+                        team.addEntry(ChatColor.translateAlternateColorCodes('&', "&" + Math.abs(i)));
+                    }
+
+
+                    int x = p.getLocation().getBlockX();
+
+                    Team team = scoreboard.getTeam("-5");
+                    team.setPrefix(ChatColor.translateAlternateColorCodes('&',"&b服务器延迟:"));
+                    team.setSuffix(ChatColor.translateAlternateColorCodes('&',"&e" + playerping));
+                    team = scoreboard.getTeam("-6");
+                    team.setPrefix(ChatColor.translateAlternateColorCodes('&',"&b服务器TPS:"));
+                    team.setSuffix(ChatColor.translateAlternateColorCodes('&',"&e" + x));
+                    //因为测试所以tps不是显示tps而是x坐标
+
+
+                    objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+                    p.setScoreboard(scoreboard);
+                });
+            }
+        }.runTaskTimer(this,0L,10L);
+
+
+
+
+
+    }
+
+    @Override
+    public void onDisable() {
+        // Plugin shutdown logic
+        System.out.println("插件已关闭");
+    }
+
+
+}
